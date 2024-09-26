@@ -112,14 +112,30 @@ static void configure_client_context(SSL_CTX *ctx)
      * fails
      */
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+
     /*
-     * In a real application you would probably just use the default system certificate trust store and call:
-     *     SSL_CTX_set_default_verify_paths(ctx);
-     * In this demo though we are using a self-signed certificate, so the client must trust it directly.
+     * Enable the default system certificate trust store, i.e. both
+     * OSSLDIR/certs.pem and OSSLDIR/certs/.
      */
-    if (!SSL_CTX_load_verify_locations(ctx, "cert.pem", NULL)) {
+    if (!SSL_CTX_set_default_verify_paths(ctx)) {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
+    }
+
+    const char *additional_ca = getenv("ADDITIONAL_CA");
+    if (additional_ca != NULL) {
+        /*
+         * If the ADDITIONAL_CA environment variable is set, call
+         * SSL_CTX_load_verify_locations() with it. If the CA required for
+         * a successful connection is in OSSLDIR/certs.pem, this call will not
+         * cause the connection to fail. However, if OSSLDIR/certs.pem does not
+         * exist or is empty, and the required CA is only in OSSLDIR/certs/,
+         * the connection will fail.
+         */
+        if (!SSL_CTX_load_verify_locations(ctx, additional_ca, NULL)) {
+            ERR_print_errors_fp(stderr);
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
