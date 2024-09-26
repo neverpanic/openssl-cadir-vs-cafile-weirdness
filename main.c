@@ -123,6 +123,7 @@ static void configure_client_context(SSL_CTX *ctx)
     }
 
     const char *additional_ca = getenv("ADDITIONAL_CA");
+    const char *additional_cadir = getenv("ADDITIONAL_CADIR");
     if (additional_ca != NULL) {
         /*
          * If the ADDITIONAL_CA environment variable is set, call
@@ -132,7 +133,7 @@ static void configure_client_context(SSL_CTX *ctx)
          * exist or is empty, and the required CA is only in OSSLDIR/certs/,
          * the connection will fail.
          */
-        if (!SSL_CTX_load_verify_locations(ctx, additional_ca, NULL)) {
+        if (!SSL_CTX_load_verify_locations(ctx, additional_ca, additional_cadir)) {
             ERR_print_errors_fp(stderr);
             exit(EXIT_FAILURE);
         }
